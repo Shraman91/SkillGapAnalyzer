@@ -1,0 +1,26 @@
+# ─── Python / Backend ──────────────────────────────────────────────
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/.pytest_cache/
+*.egg-info/
+
+# ─── Environment & Secrets ────────────────────────────────────────
+.env
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+serviceAccountKey.json
+
+# ─── Node / Frontend ──────────────────────────────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+
+# ─── OS / Editor ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/settings.json
