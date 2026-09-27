@@ -1,83 +1,140 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { Sun, Moon, LogOut, User as UserIcon } from "lucide-react";
+import {
+  LayoutDashboard,
+  Search,
+  Target,
+  Briefcase,
+  Sun,
+  Moon,
+  LogOut,
+  User as UserIcon,
+  Sparkles,
+} from "lucide-react";
 
 export function Navbar() {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const pathname = usePathname();
+
+  const navItems = [
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "New Analysis", href: "/analyze", icon: Search },
+    { name: "Roles", href: "/roles", icon: Target },
+    { name: "Job Market", href: "/jobs", icon: Briefcase },
+  ];
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b dark:border-gray-800 px-6 py-4 flex justify-between items-center transition-colors">
-      <div className="flex items-center gap-2">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-violet-600 text-white rounded-lg flex items-center justify-center font-bold text-sm shadow">
-            Sg
-          </div>
-          <h1 className="font-semibold text-lg tracking-tight text-gray-900 dark:text-white">
-            AI Skill Gap Analyzer
+    <aside className="fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-blue-100 bg-white dark:border-purple-900/60 dark:bg-black">
+      {/* Logo */}
+      <div className="flex items-center gap-3 border-b border-blue-100 px-5 py-5 dark:border-purple-900/60">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-sm dark:bg-purple-600">
+          SG
+        </div>
+
+        <div>
+          <h1 className="font-bold text-slate-900 dark:text-white">
+            Skill Gap
           </h1>
-        </Link>
+          <p className="text-xs text-slate-500 dark:text-purple-300">
+            AI Analyzer
+          </p>
+        </div>
       </div>
 
-      <nav className="hidden md:flex gap-6 text-sm font-medium">
-        <Link href="/dashboard" className="text-violet-700 dark:text-violet-300 hover:text-violet-600 dark:hover:text-violet-400 transition">
-          Dashboard
-        </Link>
-        <Link href="/analyze" className="text-violet-700 dark:text-violet-300 hover:text-violet-600 dark:hover:text-violet-400 transition">
-          New Analysis
-        </Link>
-        <Link href="/roles" className="text-violet-700 dark:text-violet-300 hover:text-violet-600 dark:hover:text-violet-400 transition">
-          Roles
-        </Link>
-        <Link href="/jobs" className="text-violet-700 dark:text-violet-300 hover:text-violet-600 dark:hover:text-violet-400 transition">
-          Job Market
-        </Link>
+      {/* Navigation */}
+      <nav className="flex-1 space-y-2 px-3 py-6">
+        <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-purple-400">
+          Menu
+        </p>
+
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href;
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-blue-50 text-blue-700 shadow-sm dark:bg-purple-950/60 dark:text-purple-300"
+                  : "text-slate-600 hover:bg-blue-50 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-purple-950/40 dark:hover:text-purple-300"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+              <span>{item.name}</span>
+            </Link>
+          );
+        })}
       </nav>
 
-      <div className="flex items-center gap-3">
-        {/* Theme Toggle */}
+      {/* Bottom Section */}
+      <div className="space-y-3 border-t border-blue-100 p-4 dark:border-purple-900/60">
+        {/* Theme */}
         <button
           onClick={toggleTheme}
-          aria-label="Toggle theme"
-          className="p-2 rounded-xl text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 transition"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-purple-950/40 dark:hover:text-purple-300"
         >
-          {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+          {theme === "dark" ? (
+            <Sun className="h-5 w-5 text-amber-400" />
+          ) : (
+            <Moon className="h-5 w-5 text-blue-600" />
+          )}
+          <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
         </button>
 
+        {/* User */}
         {user ? (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl">
-              <UserIcon className="w-3.5 h-3.5" />
-              <span>{user.displayName || user.email?.split("@")[0] || "Student"}</span>
+          <div className="rounded-xl bg-blue-50 p-3 dark:bg-purple-950/40">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white dark:bg-purple-600">
+                <UserIcon className="h-4 w-4" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-slate-800 dark:text-white">
+                  {user.displayName ||
+                    user.email?.split("@")[0] ||
+                    "Student"}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-purple-300">
+                  Account
+                </p>
+              </div>
             </div>
+
             <button
               onClick={() => logout()}
-              title="Sign Out"
-              className="p-2 text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="h-4 w-4" />
+              Sign Out
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="space-y-2">
             <Link
               href="/login"
-              className="text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-blue-600 px-3 py-1.5 rounded-lg transition"
+              className="flex w-full items-center justify-center rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 dark:text-slate-300 dark:hover:bg-purple-950/40"
             >
               Login
             </Link>
+
             <Link
               href="/signup"
-              className="text-xs font-semibold bg-blue-600 text-white px-3.5 py-1.5 rounded-xl hover:bg-blue-700 transition shadow-sm"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
             >
+              <Sparkles className="h-4 w-4" />
               Sign Up
             </Link>
           </div>
         )}
       </div>
-    </header>
+    </aside>
   );
 }

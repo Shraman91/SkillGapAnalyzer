@@ -16,11 +16,13 @@ import {
   Sparkles,
   Loader2,
   ArrowRight,
-  BookOpen
+  BookOpen,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 export default function JobsPage() {
   const { getToken } = useAuth();
+
   const [query, setQuery] = useState("Python Developer");
   const [location, setLocation] = useState("India");
   const [jobs, setJobs] = useState<any[]>([]);
@@ -32,6 +34,7 @@ export default function JobsPage() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!query.trim() || !location.trim()) return;
 
     setLoadingSearch(true);
@@ -41,8 +44,10 @@ export default function JobsPage() {
     try {
       const data = await searchJobs(query, location);
       setJobs(data);
-      // Auto-select first 3 by default
-      setSelectedJobIds(data.slice(0, 3).map((j: any) => j.job_id));
+
+      setSelectedJobIds(
+        data.slice(0, 3).map((j: any) => j.job_id)
+      );
     } catch (err: any) {
       console.error(err);
       setError("Failed to search jobs. Please try again.");
@@ -53,7 +58,9 @@ export default function JobsPage() {
 
   const toggleJobSelect = (jobId: string) => {
     if (selectedJobIds.includes(jobId)) {
-      setSelectedJobIds(selectedJobIds.filter((id) => id !== jobId));
+      setSelectedJobIds(
+        selectedJobIds.filter((id) => id !== jobId)
+      );
     } else {
       setSelectedJobIds([...selectedJobIds, jobId]);
     }
@@ -70,7 +77,15 @@ export default function JobsPage() {
 
     try {
       const token = await getToken();
-      const result = await analyzeJobReadiness(selectedJobIds, query, location, undefined, token);
+
+      const result = await analyzeJobReadiness(
+        selectedJobIds,
+        query,
+        location,
+        undefined,
+        token
+      );
+
       setReadinessResult(result);
     } catch (err: any) {
       console.error(err);
@@ -81,174 +96,287 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-10 pb-16">
-      <div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-          Live Job Market Readiness
-        </h2>
-        <p className="text-gray-500 dark:text-gray-400 mt-2 text-sm">
-          Search real-time listings from Adzuna and analyze how your skill profile stacks up across open roles.
-        </p>
+    <div className="mx-auto max-w-6xl space-y-8 pb-16">
+
+      {/* PAGE HEADER */}
+      <div className="relative overflow-hidden rounded-3xl border border-blue-100 bg-white p-7 shadow-sm dark:border-purple-900/60 dark:bg-[#090909]">
+        <div className="absolute -right-20 -top-20 h-40 w-40 rounded-full bg-blue-100/70 blur-3xl dark:bg-purple-900/20" />
+
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:border-purple-800 dark:bg-purple-950/40 dark:text-purple-300">
+              <BriefcaseBusiness className="h-3.5 w-3.5" />
+              Live Job Market
+            </div>
+
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              Job Market Readiness
+            </h1>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400">
+              Search real-time job listings and analyze how your current
+              skills compare with the requirements of open roles.
+            </p>
+          </div>
+
+          {jobs.length > 0 && (
+            <div className="flex items-center gap-2 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 dark:border-purple-900/60 dark:bg-purple-950/30">
+              <BriefcaseBusiness className="h-5 w-5 text-blue-600 dark:text-purple-400" />
+
+              <div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Listings found
+                </p>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">
+                  {jobs.length}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Search Bar */}
-      <form
-        onSubmit={handleSearch}
-        className="bg-white dark:bg-gray-900 p-4 rounded-3xl border dark:border-gray-800 shadow-sm grid md:grid-cols-7 gap-3"
-      >
-        <div className="md:col-span-3 relative flex items-center">
-          <Search className="w-5 h-5 absolute left-3.5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Job Title or Keyword (e.g. Python Developer)"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"
-          />
-        </div>
-        <div className="md:col-span-3 relative flex items-center">
-          <MapPin className="w-5 h-5 absolute left-3.5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="City or Country (e.g. Bengaluru, India)"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="w-full pl-10 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-2xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={loadingSearch}
-          className="md:col-span-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-2xl py-2.5 flex items-center justify-center transition shadow-sm"
-        >
-          {loadingSearch ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
-        </button>
-      </form>
+      {/* SEARCH PANEL */}
+      <section className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm dark:border-purple-900/60 dark:bg-[#090909]">
+        <div className="mb-5">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            Search Jobs
+          </h2>
 
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Enter a role and location to find relevant open positions.
+          </p>
+        </div>
+
+        <form
+          onSubmit={handleSearch}
+          className="grid gap-3 md:grid-cols-7"
+        >
+          {/* JOB QUERY */}
+          <div className="relative md:col-span-3">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+            <input
+              type="text"
+              placeholder="Job title or keyword"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-purple-900/70 dark:bg-black dark:text-white dark:focus:border-purple-500 dark:focus:ring-purple-900/30"
+            />
+          </div>
+
+          {/* LOCATION */}
+          <div className="relative md:col-span-3">
+            <MapPin className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+            <input
+              type="text"
+              placeholder="City or country"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-purple-900/70 dark:bg-black dark:text-white dark:focus:border-purple-500 dark:focus:ring-purple-900/30"
+            />
+          </div>
+
+          {/* SEARCH BUTTON */}
+          <button
+            type="submit"
+            disabled={loadingSearch}
+            className="flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-purple-600 dark:hover:bg-purple-700"
+          >
+            {loadingSearch ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Searching
+              </>
+            ) : (
+              <>
+                <Search className="h-4 w-4" />
+                Search
+              </>
+            )}
+          </button>
+        </form>
+      </section>
+
+      {/* ERROR */}
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 rounded-2xl text-sm border border-red-200 dark:border-red-900">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
           {error}
         </div>
       )}
 
-      {/* Market Readiness Aggregation Card */}
+      {/* READINESS REPORT */}
       {readinessResult && (
-        <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-8 rounded-3xl shadow-xl space-y-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <span className="text-xs uppercase tracking-widest text-blue-300 font-bold">
-                Market Alignment Report
-              </span>
-              <h3 className="text-2xl font-bold mt-1">
-                {readinessResult.query} in {readinessResult.location}
-              </h3>
-            </div>
-            <div className="flex items-center gap-3 bg-white/10 px-5 py-3 rounded-2xl backdrop-blur-md">
-              <span className="text-3xl font-extrabold text-emerald-400">
-                {readinessResult.overall_readiness}%
-              </span>
-              <span className="text-xs text-blue-200 uppercase font-semibold tracking-wider">
-                Overall<br />Readiness
-              </span>
+        <section className="overflow-hidden rounded-3xl border border-blue-200 bg-blue-50 dark:border-purple-900 dark:bg-[#0c0712]">
+          <div className="border-b border-blue-200 p-6 dark:border-purple-900/70">
+            <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-purple-400">
+                  <TrendingUp className="h-4 w-4" />
+                  Market Alignment Report
+                </div>
+
+                <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
+                  {readinessResult.query}
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {readinessResult.location}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-blue-200 bg-white px-6 py-4 text-center shadow-sm dark:border-purple-800 dark:bg-black">
+                <p className="text-3xl font-extrabold text-blue-600 dark:text-purple-400">
+                  {readinessResult.overall_readiness}%
+                </p>
+
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                  Overall Readiness
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-blue-200 uppercase tracking-wider flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" /> Top In-Demand Missing Skills Across Selected Jobs
-            </h4>
-            <div className="grid md:grid-cols-3 gap-3">
-              {readinessResult.improvement_fields?.map((field: any, idx: number) => (
-                <div key={idx} className="bg-white/10 p-4 rounded-2xl flex flex-col justify-between gap-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-sm">{field.skill}</span>
-                    <span className="text-xs bg-emerald-400/20 text-emerald-300 px-2 py-0.5 rounded-md font-mono font-bold">
-                      {field.demand_percentage}% demand
-                    </span>
-                  </div>
-                  <Link
-                    href={`/analyze`}
-                    className="inline-flex items-center gap-1 text-[11px] text-blue-200 hover:text-white font-medium transition"
+          <div className="p-6">
+            <h3 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-white">
+              <TrendingUp className="h-4 w-4 text-blue-600 dark:text-purple-400" />
+              Top Missing Skills Across Selected Jobs
+            </h3>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              {readinessResult.improvement_fields?.map(
+                (field: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="rounded-2xl border border-blue-100 bg-white p-4 dark:border-purple-900/60 dark:bg-black"
                   >
-                    <BookOpen className="w-3 h-3" /> Build Learning Roadmap
-                  </Link>
-                </div>
-              ))}
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-bold text-slate-900 dark:text-white">
+                        {field.skill}
+                      </span>
+
+                      <span className="rounded-lg bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700 dark:bg-purple-950/50 dark:text-purple-300">
+                        {field.demand_percentage}% demand
+                      </span>
+                    </div>
+
+                    <Link
+                      href="/analyze"
+                      className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 transition hover:text-blue-800 dark:text-purple-400 dark:hover:text-purple-300"
+                    >
+                      <BookOpen className="h-3.5 w-3.5" />
+                      Build Learning Roadmap
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                )
+              )}
             </div>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Results Header with Batch Action */}
+      {/* RESULTS HEADER */}
       {jobs.length > 0 && (
-        <div className="flex justify-between items-center border-b dark:border-gray-800 pb-4">
-          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Found {jobs.length} open listings. Selected: {selectedJobIds.length}
-          </span>
+        <div className="flex flex-col gap-4 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm dark:border-purple-900/60 dark:bg-[#090909] md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">
+              {jobs.length} open listings found
+            </p>
+
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              {selectedJobIds.length} job
+              {selectedJobIds.length !== 1 ? "s" : ""} selected for analysis
+            </p>
+          </div>
+
           <button
             onClick={handleAnalyzeReadiness}
-            disabled={loadingAnalysis || selectedJobIds.length === 0}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-2xl flex items-center gap-2 transition disabled:opacity-50 shadow-sm"
+            disabled={
+              loadingAnalysis || selectedJobIds.length === 0
+            }
+            className="flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-purple-600 dark:hover:bg-purple-700"
           >
             {loadingAnalysis ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="h-4 w-4" />
             )}
-            Analyze Readiness on Selected Jobs
+
+            {loadingAnalysis
+              ? "Analyzing..."
+              : "Analyze Selected Jobs"}
           </button>
         </div>
       )}
 
-      {/* Job Cards */}
+      {/* JOB RESULTS */}
       <div className="space-y-4">
         {jobs.map((job) => {
           const isSelected = selectedJobIds.includes(job.job_id);
-          const jobReadiness = readinessResult?.jobs_analyzed?.find(
-            (j: any) => j.job_id === job.job_id
-          );
+
+          const jobReadiness =
+            readinessResult?.jobs_analyzed?.find(
+              (j: any) => j.job_id === job.job_id
+            );
 
           return (
-            <div
+            <article
               key={job.job_id}
-              className={`p-6 bg-white dark:bg-gray-900 rounded-3xl border transition shadow-sm ${
+              className={`rounded-3xl border bg-white p-6 shadow-sm transition dark:bg-[#090909] ${
                 isSelected
-                  ? "border-blue-500 ring-2 ring-blue-50 dark:ring-blue-900/40"
-                  : "border-gray-200 dark:border-gray-800"
+                  ? "border-blue-500 ring-2 ring-blue-100 dark:border-purple-500 dark:ring-purple-900/30"
+                  : "border-slate-200 hover:border-blue-200 dark:border-purple-900/50 dark:hover:border-purple-700"
               }`}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
+              <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+
+                {/* JOB INFO */}
+                <div className="flex gap-4">
                   <button
+                    type="button"
                     onClick={() => toggleJobSelect(job.job_id)}
-                    className="mt-1 text-gray-400 hover:text-blue-600 transition"
+                    className="mt-1 shrink-0 text-slate-400 transition hover:text-blue-600 dark:hover:text-purple-400"
+                    aria-label={
+                      isSelected
+                        ? "Deselect job"
+                        : "Select job"
+                    }
                   >
                     {isSelected ? (
-                      <CheckSquare className="w-5 h-5 text-blue-600" />
+                      <CheckSquare className="h-5 w-5 text-blue-600 dark:text-purple-400" />
                     ) : (
-                      <Square className="w-5 h-5" />
+                      <Square className="h-5 w-5" />
                     )}
                   </button>
-                  <div>
-                    <h4 className="font-bold text-lg text-gray-900 dark:text-white">{job.title}</h4>
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-2">
-                      <span className="flex items-center gap-1 font-medium text-gray-700 dark:text-gray-300">
-                        <Building className="w-3.5 h-3.5" />
+
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                      {job.title}
+                    </h3>
+
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                        <Building className="h-3.5 w-3.5" />
                         {job.company}
                       </span>
+
                       <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5" />
+                        <MapPin className="h-3.5 w-3.5" />
                         {job.location}
                       </span>
+
                       {job.salary_range && (
-                        <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                          <DollarSign className="w-3.5 h-3.5" />
+                        <span className="flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                          <DollarSign className="h-3.5 w-3.5" />
                           {job.salary_range}
                         </span>
                       )}
+
                       {job.posted_date && (
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
+                          <Calendar className="h-3.5 w-3.5" />
                           {job.posted_date}
                         </span>
                       )}
@@ -256,40 +384,67 @@ export default function JobsPage() {
                   </div>
                 </div>
 
+                {/* READINESS */}
                 {jobReadiness && (
-                  <div className="flex flex-col items-end">
-                    <span className="text-[10px] text-gray-400 font-medium uppercase">Readiness</span>
-                    <span
-                      className={`text-sm font-extrabold px-3 py-1 rounded-full mt-0.5 ${
-                        jobReadiness.readiness_percentage >= 70
-                          ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900"
-                          : "bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900"
-                      }`}
-                    >
+                  <div className="shrink-0 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-center dark:border-purple-900/60 dark:bg-purple-950/20">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                      Readiness
+                    </p>
+
+                    <p className="mt-1 text-xl font-extrabold text-blue-600 dark:text-purple-400">
                       {jobReadiness.readiness_percentage}%
-                    </span>
+                    </p>
                   </div>
                 )}
               </div>
 
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-4 leading-relaxed line-clamp-2">
+              {/* DESCRIPTION */}
+              <p className="mt-5 line-clamp-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                 {job.description_snippet}
               </p>
 
-              <div className="mt-4 pt-3 border-t dark:border-gray-800 flex justify-end">
+              {/* FOOTER */}
+              <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-purple-900/50">
+                {isSelected ? (
+                  <span className="text-xs font-semibold text-blue-600 dark:text-purple-400">
+                    ✓ Selected for analysis
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-400">
+                    Select to include in analysis
+                  </span>
+                )}
+
                 <a
                   href={job.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 transition hover:text-blue-800 dark:text-purple-400 dark:hover:text-purple-300"
                 >
-                  View Job on Adzuna <ArrowRight className="w-3 h-3" />
+                  View Job
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </a>
               </div>
-            </div>
+            </article>
           );
         })}
       </div>
+
+      {/* EMPTY STATE */}
+      {!loadingSearch && jobs.length === 0 && !error && (
+        <div className="rounded-3xl border border-dashed border-blue-200 bg-blue-50/50 px-6 py-12 text-center dark:border-purple-900/60 dark:bg-purple-950/10">
+          <BriefcaseBusiness className="mx-auto h-10 w-10 text-blue-400 dark:text-purple-500" />
+
+          <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
+            Search for your next opportunity
+          </h3>
+
+          <p className="mx-auto mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400">
+            Enter a job title and location above to discover open
+            positions and analyze your readiness.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

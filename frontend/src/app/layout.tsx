@@ -19,19 +19,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased bg-violet-50 dark:bg-[#0f0a1a] text-violet-950 dark:text-violet-100 min-h-screen transition-colors`}>
+      <body
+        className={`${inter.className} antialiased bg-slate-50 dark:bg-black text-slate-900 dark:text-white min-h-screen transition-colors`}
+      >
         <AuthProvider>
           <ThemeProvider>
-            <div className="flex flex-col min-h-screen">
+            <div className="min-h-screen">
+              {/* Sidebar */}
               <Navbar />
 
-              <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8">
-                {children}
-              </main>
+              {/* Main Area */}
+              <div className="min-h-screen pl-64">
+                <main className="min-h-[calc(100vh-65px)] w-full p-6 md:p-8">
+                  {children}
+                </main>
 
-              <footer className="bg-white dark:bg-gray-900 border-t dark:border-gray-800 py-6 text-center text-xs text-gray-500 dark:text-gray-400">
-                &copy; {new Date().getFullYear()} AI Skill Gap Analyzer. Built with LangGraph & Next.js.
-              </footer>
+                {/* Footer */}
+                <footer className="border-t border-blue-100 bg-white py-5 text-center text-xs text-slate-500 dark:border-purple-900/60 dark:bg-black dark:text-slate-400">
+                  &copy; {new Date().getFullYear()} AI Skill Gap Analyzer.
+                  Built with LangGraph & Next.js.
+                </footer>
+              </div>
             </div>
           </ThemeProvider>
         </AuthProvider>

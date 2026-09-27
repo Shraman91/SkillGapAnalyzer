@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { fetchAnalysisDetail, updateUnitProgress } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
@@ -22,33 +22,40 @@ import {
   HelpCircle,
   Award,
   RefreshCw,
-  Radar
+  Radar,
 } from "lucide-react";
 
 export default function AnalysisDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params?.id as string;
   const { getToken } = useAuth();
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [progressState, setProgressState] = useState<Record<string, boolean>>({});
-  const [expandedTopics, setExpandedTopics] = useState<Record<string, boolean>>({});
+  const [progressState, setProgressState] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [expandedTopics, setExpandedTopics] = useState<
+    Record<string, boolean>
+  >({});
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!id) return;
+
     getToken().then((token) => {
       fetchAnalysisDetail(id, token)
         .then((res) => {
           setData(res);
+
           if (res.progress) {
             const map: Record<string, boolean> = {};
-            Object.keys(res.progress).forEach((k) => {
-              map[k] = res.progress[k].completed;
+
+            Object.keys(res.progress).forEach((key) => {
+              map[key] = res.progress[key].completed;
             });
+
             setProgressState(map);
           }
         })
@@ -58,325 +65,460 @@ export default function AnalysisDetailPage() {
         })
         .finally(() => setLoading(false));
     });
-  }, [id]);
+  }, [id, getToken]);
 
   const toggleUnit = async (unitId: string) => {
     const current = !!progressState[unitId];
     const nextVal = !current;
 
-    // Optimistic UI update
-    setProgressState((prev) => ({ ...prev, [unitId]: nextVal }));
+    setProgressState((prev) => ({
+      ...prev,
+      [unitId]: nextVal,
+    }));
 
     try {
       const token = await getToken();
       await updateUnitProgress(id, unitId, nextVal, token);
     } catch (err) {
       console.error("Failed to sync progress:", err);
-      // Revert on error
-      setProgressState((prev) => ({ ...prev, [unitId]: current }));
+
+      setProgressState((prev) => ({
+        ...prev,
+        [unitId]: current,
+      }));
     }
   };
 
   const toggleTopicExpand = (topicId: string) => {
-    setExpandedTopics((prev) => ({ ...prev, [topicId]: !prev[topicId] }));
+    setExpandedTopics((prev) => ({
+      ...prev,
+      [topicId]: !prev[topicId],
+    }));
   };
 
-  const copyShareLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Could not copy link:", err);
+    }
   };
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-sm text-gray-500 font-medium">Loading analysis report...</p>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600 dark:border-purple-900 dark:border-t-purple-500" />
+
+        <p className="mt-4 text-sm font-medium text-slate-500 dark:text-slate-400">
+          Loading analysis report...
+        </p>
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="p-6 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 rounded-2xl text-center max-w-lg mx-auto border border-red-200 dark:border-red-900">
+      <div className="mx-auto mt-10 max-w-lg rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-700 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-400">
         {error || "Report not found."}
       </div>
     );
   }
 
-  const { gap_analysis, roadmaps, projects, interview_prep, role_title, candidate_skills, required_skills } = data;
+  const {
+    gap_analysis,
+    roadmaps,
+    projects,
+    interview_prep,
+    role_title,
+    candidate_skills,
+    required_skills,
+  } = data;
+
   const matchScore = gap_analysis?.match_score || 0;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-10 pb-16">
-      {/* Header Actions */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b dark:border-gray-800 pb-6">
-        <div>
-          <span className="text-xs font-semibold px-2.5 py-1 bg-blue-100 dark:bg-blue-900/60 text-blue-800 dark:text-blue-300 rounded-full">
-            Analysis Report
-          </span>
-          <h2 className="text-3xl font-extrabold mt-2 text-gray-900 dark:text-white">
-            {role_title || "Target Role"}
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-            Generated on {new Date(data.timestamp).toLocaleDateString()}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Link
-            href="/analyze"
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-xl text-xs font-bold transition"
-          >
-            <RefreshCw className="w-3.5 h-3.5" /> Re-Analyze
-          </Link>
-          <button
-            onClick={copyShareLink}
-            className="flex items-center gap-1.5 px-3.5 py-2 border dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium transition text-gray-700 dark:text-gray-300"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            {copied ? "Copied!" : "Share Link"}
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-gray-900 dark:bg-gray-800 text-white rounded-xl hover:bg-gray-800 text-xs font-medium transition shadow-sm"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            Export PDF
-          </button>
-        </div>
-      </div>
+    <div className="mx-auto max-w-6xl space-y-10 pb-16">
+      {/* -------------------------------------------------- */}
+      {/* HEADER */}
+      {/* -------------------------------------------------- */}
 
-      {/* Overview Cards: Match Score + Strengths/Weaknesses */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Match Score Card */}
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="relative w-32 h-32 flex items-center justify-center">
-            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+      <section className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm dark:border-purple-900/60 dark:bg-[#090909] md:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:border-purple-900/70 dark:bg-purple-950/40 dark:text-purple-300">
+              <Sparkles className="h-3.5 w-3.5" />
+              AI Analysis Report
+            </div>
+
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white md:text-4xl">
+              {role_title || "Target Role"}
+            </h1>
+
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              Generated on{" "}
+              {new Date(data.timestamp).toLocaleDateString()}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/analyze"
+              className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 transition hover:bg-blue-100 dark:border-purple-900/70 dark:bg-purple-950/40 dark:text-purple-300 dark:hover:bg-purple-900/50"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              Re-Analyze
+            </Link>
+
+            <button
+              onClick={copyShareLink}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 dark:border-purple-900/60 dark:bg-black dark:text-slate-300 dark:hover:bg-purple-950/30"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              {copied ? "Copied!" : "Share Link"}
+            </button>
+
+            <button
+              onClick={() => window.print()}
+              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700 dark:bg-purple-600 dark:hover:bg-purple-700"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              Export PDF
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* -------------------------------------------------- */}
+      {/* OVERVIEW */}
+      {/* -------------------------------------------------- */}
+
+      <section className="grid gap-5 md:grid-cols-3">
+        {/* Match Score */}
+        <div className="rounded-3xl border border-blue-100 bg-white p-7 text-center shadow-sm dark:border-purple-900/60 dark:bg-[#090909]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600 dark:text-purple-400">
+            Skill Match
+          </p>
+
+          <div className="relative mx-auto mt-5 h-36 w-36">
+            <svg
+              className="h-full w-full -rotate-90"
+              viewBox="0 0 36 36"
+            >
               <path
-                className="text-gray-100 dark:text-gray-800"
-                strokeWidth="3.8"
+                className="text-blue-100 dark:text-purple-950"
                 stroke="currentColor"
+                strokeWidth="3.8"
                 fill="none"
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
+
               <path
-                className={`${
-                  matchScore >= 70
-                    ? "text-emerald-500"
-                    : matchScore >= 50
-                    ? "text-amber-500"
-                    : "text-red-500"
-                } transition-all duration-1000 ease-out`}
+                className="text-blue-600 transition-all duration-1000 dark:text-purple-500"
+                stroke="currentColor"
                 strokeDasharray={`${matchScore}, 100`}
                 strokeWidth="3.8"
                 strokeLinecap="round"
-                stroke="currentColor"
                 fill="none"
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
               />
             </svg>
-            <div className="absolute flex flex-col items-center">
-              <span className="text-3xl font-extrabold text-gray-900 dark:text-white">{matchScore}%</span>
-              <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Overlap</span>
+
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-4xl font-black text-slate-900 dark:text-white">
+                {matchScore}%
+              </span>
+
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Match
+              </span>
             </div>
           </div>
-          <span className="mt-4 font-bold text-gray-800 dark:text-gray-200">{gap_analysis?.overall_readiness}</span>
+
+          <p className="mt-5 text-sm font-bold text-slate-700 dark:text-slate-200">
+            {gap_analysis?.overall_readiness}
+          </p>
         </div>
 
         {/* Strengths */}
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex flex-col justify-between">
-          <div>
-            <h4 className="font-bold text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider mb-3">
-              <Sparkles className="w-4 h-4" /> Validated Strengths
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {gap_analysis?.matched_skills?.map((s: string, idx: number) => (
-                <span
-                  key={idx}
-                  className="bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 text-xs px-2.5 py-1 rounded-lg font-medium border border-emerald-100 dark:border-emerald-900"
-                >
-                  {s}
-                </span>
-              ))}
-              {gap_analysis?.matched_skills?.length === 0 && (
-                <p className="text-xs text-gray-400">No overlapping skills detected.</p>
-              )}
+        <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm dark:border-purple-900/60 dark:bg-[#090909]">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="rounded-xl bg-blue-50 p-2 dark:bg-purple-950/50">
+              <Sparkles className="h-4 w-4 text-blue-600 dark:text-purple-400" />
             </div>
+
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              Your Strengths
+            </h3>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {gap_analysis?.matched_skills?.map(
+              (skill: string, index: number) => (
+                <span
+                  key={index}
+                  className="rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-700 dark:border-purple-900/60 dark:bg-purple-950/40 dark:text-purple-300"
+                >
+                  {skill}
+                </span>
+              )
+            )}
+
+            {gap_analysis?.matched_skills?.length === 0 && (
+              <p className="text-xs text-slate-400">
+                No overlapping skills detected.
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Weaknesses / Gaps */}
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl border dark:border-gray-800 shadow-sm flex flex-col justify-between">
-          <div>
-            <h4 className="font-bold text-xs text-rose-700 dark:text-rose-400 flex items-center gap-1.5 uppercase tracking-wider mb-3">
-              <HelpCircle className="w-4 h-4" /> Missing Key Skills
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {gap_analysis?.missing_skills?.map((m: any, idx: number) => (
+        {/* Missing Skills */}
+        <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm dark:border-purple-900/60 dark:bg-[#090909]">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="rounded-xl bg-red-50 p-2 dark:bg-red-950/30">
+              <HelpCircle className="h-4 w-4 text-red-500" />
+            </div>
+
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              Skills to Improve
+            </h3>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {gap_analysis?.missing_skills?.map(
+              (skill: any, index: number) => (
                 <span
-                  key={idx}
-                  className={`text-xs px-2.5 py-1 rounded-lg font-medium border ${
-                    m.priority === "must-have"
-                      ? "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-100 dark:border-rose-900"
-                      : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-900"
+                  key={index}
+                  className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
+                    skill.priority === "must-have"
+                      ? "border-red-100 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+                      : "border-amber-100 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300"
                   }`}
                 >
-                  {m.skill} ({m.priority})
+                  {skill.skill} ({skill.priority})
                 </span>
-              ))}
-            </div>
+              )
+            )}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Skills Radar Comparison Chart */}
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-3xl border dark:border-gray-800 shadow-sm space-y-3">
-        <h3 className="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
-          <Radar className="w-5 h-5 text-blue-600" />
-          Skills Radar Comparison
-        </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Comparing your candidate skill proficiency levels against the benchmark job requirements.
-        </p>
+      {/* -------------------------------------------------- */}
+      {/* RADAR CHART */}
+      {/* -------------------------------------------------- */}
+
+      <section className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm dark:border-purple-900/60 dark:bg-[#090909] md:p-7">
+        <div className="mb-5">
+          <div className="flex items-center gap-2">
+            <div className="rounded-xl bg-blue-50 p-2 dark:bg-purple-950/50">
+              <Radar className="h-5 w-5 text-blue-600 dark:text-purple-400" />
+            </div>
+
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+              Skills Radar Comparison
+            </h2>
+          </div>
+
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Compare your current skill levels against the benchmark
+            requirements for the target role.
+          </p>
+        </div>
+
         <SkillsRadarChart
           candidateSkills={candidate_skills || {}}
           requiredSkills={required_skills || {}}
         />
-      </div>
+      </section>
 
-      {/* Roadmap Explorer */}
-      <div className="space-y-6">
+      {/* -------------------------------------------------- */}
+      {/* LEARNING ROADMAP */}
+      {/* -------------------------------------------------- */}
+
+      <section className="space-y-5">
         <div>
-          <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-            <BookOpen className="w-6 h-6 text-blue-600" />
-            Targeted Learning Roadmaps
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Structured modular paths with verified resource links to bridge your identified skill gaps.
+          <div className="flex items-center gap-2">
+            <div className="rounded-xl bg-blue-50 p-2 dark:bg-purple-950/50">
+              <BookOpen className="h-5 w-5 text-blue-600 dark:text-purple-400" />
+            </div>
+
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              Targeted Learning Roadmaps
+            </h2>
+          </div>
+
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Follow structured learning paths to bridge your identified skill
+            gaps.
           </p>
         </div>
 
         <div className="space-y-4">
           {roadmaps?.map((roadmap: any) => {
-            const isExpanded = expandedTopics[roadmap.topic_id] ?? true;
+            const isExpanded =
+              expandedTopics[roadmap.topic_id] ?? true;
 
-            // Compute total units & completed units for topic
             let totalUnits = 0;
             let completedUnits = 0;
 
-            roadmap.chapters?.forEach((c: any) => {
-              c.units?.forEach((u: any) => {
+            roadmap.chapters?.forEach((chapter: any) => {
+              chapter.units?.forEach((unit: any) => {
                 totalUnits += 1;
-                if (progressState[u.unit_id]) completedUnits += 1;
+
+                if (progressState[unit.unit_id]) {
+                  completedUnits += 1;
+                }
               });
             });
 
-            const topicProgressPct = totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0;
+            const progressPercent =
+              totalUnits > 0
+                ? Math.round((completedUnits / totalUnits) * 100)
+                : 0;
 
             return (
               <div
                 key={roadmap.topic_id}
-                className="bg-white dark:bg-gray-900 border dark:border-gray-800 rounded-3xl shadow-sm overflow-hidden transition"
+                className="overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-sm dark:border-purple-900/60 dark:bg-[#090909]"
               >
-                <div
-                  onClick={() => toggleTopicExpand(roadmap.topic_id)}
-                  className="p-5 flex items-center justify-between cursor-pointer bg-gray-50/50 dark:bg-gray-800/40 hover:bg-gray-50 dark:hover:bg-gray-800/80 transition border-b dark:border-gray-800"
+                {/* Topic Header */}
+                <button
+                  onClick={() =>
+                    toggleTopicExpand(roadmap.topic_id)
+                  }
+                  className="flex w-full items-center justify-between gap-4 border-b border-blue-100 bg-blue-50/60 p-5 text-left transition hover:bg-blue-50 dark:border-purple-900/60 dark:bg-purple-950/20 dark:hover:bg-purple-950/40"
                 >
                   <div className="flex items-center gap-3">
                     {isExpanded ? (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                      <ChevronDown className="h-5 w-5 text-blue-500 dark:text-purple-400" />
                     ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                      <ChevronRight className="h-5 w-5 text-blue-500 dark:text-purple-400" />
                     )}
+
                     <div>
-                      <h4 className="font-bold text-base text-gray-900 dark:text-white">{roadmap.topic_name}</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      <h3 className="font-bold text-slate-900 dark:text-white">
+                        {roadmap.topic_name}
+                      </h3>
+
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                         {completedUnits} of {totalUnits} units completed
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-24 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+
+                  <div className="hidden items-center gap-3 sm:flex">
+                    <div className="h-2 w-28 overflow-hidden rounded-full bg-blue-100 dark:bg-purple-950">
                       <div
-                        className="bg-blue-600 h-2 rounded-full transition-all"
-                        style={{ width: `${topicProgressPct}%` }}
-                      ></div>
+                        className="h-full rounded-full bg-blue-600 transition-all dark:bg-purple-500"
+                        style={{ width: `${progressPercent}%` }}
+                      />
                     </div>
-                    <span className="text-xs font-bold text-gray-600 dark:text-gray-300">{topicProgressPct}%</span>
+
+                    <span className="text-xs font-bold text-blue-700 dark:text-purple-300">
+                      {progressPercent}%
+                    </span>
                   </div>
-                </div>
+                </button>
 
                 {isExpanded && (
-                  <div className="p-6 space-y-6">
+                  <div className="space-y-7 p-5 md:p-7">
                     {roadmap.chapters?.map((chapter: any) => (
-                      <div key={chapter.chapter_number} className="border-l-2 border-blue-300 dark:border-blue-700 pl-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h5 className="font-bold text-sm text-gray-800 dark:text-gray-200">
-                            Chapter {chapter.chapter_number}: {chapter.chapter_title}
-                          </h5>
-                          <span className="text-xs text-gray-400">{chapter.description}</span>
+                      <div
+                        key={chapter.chapter_number}
+                        className="border-l-2 border-blue-200 pl-5 dark:border-purple-800"
+                      >
+                        <div className="mb-4">
+                          <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                            Chapter {chapter.chapter_number}:{" "}
+                            {chapter.chapter_title}
+                          </h4>
+
+                          {chapter.description && (
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {chapter.description}
+                            </p>
+                          )}
                         </div>
 
-                        <div className="space-y-2 mt-2">
+                        <div className="space-y-3">
                           {chapter.units?.map((unit: any) => {
-                            const isDone = !!progressState[unit.unit_id];
+                            const isDone =
+                              !!progressState[unit.unit_id];
+
                             return (
                               <div
                                 key={unit.unit_id}
-                                className={`p-4 rounded-2xl border transition ${
+                                className={`rounded-2xl border p-4 transition ${
                                   isDone
-                                    ? "bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800"
-                                    : "bg-white dark:bg-gray-850 border-gray-100 dark:border-gray-800 shadow-sm"
+                                    ? "border-blue-200 bg-blue-50/60 dark:border-purple-800 dark:bg-purple-950/20"
+                                    : "border-slate-200 bg-white hover:border-blue-200 dark:border-purple-900/60 dark:bg-black dark:hover:border-purple-700"
                                 }`}
                               >
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex items-start gap-3">
-                                    <button
-                                      onClick={() => toggleUnit(unit.unit_id)}
-                                      className="mt-0.5 text-gray-400 hover:text-emerald-600 transition"
+                                <div className="flex items-start gap-3">
+                                  <button
+                                    onClick={() =>
+                                      toggleUnit(unit.unit_id)
+                                    }
+                                    className="mt-0.5 shrink-0 transition hover:scale-105"
+                                  >
+                                    {isDone ? (
+                                      <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-purple-500" />
+                                    ) : (
+                                      <Circle className="h-5 w-5 text-slate-400 hover:text-blue-500 dark:text-slate-600 dark:hover:text-purple-400" />
+                                    )}
+                                  </button>
+
+                                  <div className="min-w-0 flex-1">
+                                    <h5
+                                      className={`text-sm font-semibold ${
+                                        isDone
+                                          ? "text-slate-400 line-through"
+                                          : "text-slate-900 dark:text-white"
+                                      }`}
                                     >
-                                      {isDone ? (
-                                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                                      ) : (
-                                        <Circle className="w-5 h-5" />
-                                      )}
-                                    </button>
-                                    <div>
-                                      <h6
-                                        className={`font-semibold text-sm ${
-                                          isDone ? "line-through text-gray-400" : "text-gray-900 dark:text-white"
-                                        }`}
-                                      >
-                                        {unit.unit_title}
-                                      </h6>
-                                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{unit.summary}</p>
-                                    </div>
+                                      {unit.unit_title}
+                                    </h5>
+
+                                    <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                      {unit.summary}
+                                    </p>
                                   </div>
                                 </div>
 
-                                {/* Resources List */}
-                                <div className="mt-3 pl-8 flex flex-wrap gap-2">
-                                  {unit.resources?.map((res: any, idx: number) => (
-                                    <a
-                                      key={idx}
-                                      href={res.url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 text-gray-750 dark:text-gray-200 text-xs rounded-xl border dark:border-gray-700 transition"
-                                    >
-                                      {res.type === "video" ? (
-                                        <Video className="w-3.5 h-3.5 text-red-500" />
-                                      ) : (
-                                        <FileText className="w-3.5 h-3.5 text-blue-500" />
-                                      )}
-                                      <span>{res.title}</span>
-                                      <span className="text-[10px] text-gray-400 flex items-center gap-0.5 ml-1">
-                                        <Clock className="w-2.5 h-2.5" />
-                                        {res.est_minutes}m
-                                      </span>
-                                      <ExternalLink className="w-3 h-3 text-gray-400 ml-1" />
-                                    </a>
-                                  ))}
+                                {/* Resources */}
+                                <div className="mt-4 flex flex-wrap gap-2 pl-8">
+                                  {unit.resources?.map(
+                                    (resource: any, index: number) => (
+                                      <a
+                                        key={index}
+                                        href={resource.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 dark:border-purple-900/60 dark:bg-purple-950/20 dark:text-slate-300 dark:hover:border-purple-700 dark:hover:bg-purple-950/50"
+                                      >
+                                        {resource.type === "video" ? (
+                                          <Video className="h-3.5 w-3.5 text-red-500" />
+                                        ) : (
+                                          <FileText className="h-3.5 w-3.5 text-blue-500 dark:text-purple-400" />
+                                        )}
+
+                                        <span className="max-w-[180px] truncate">
+                                          {resource.title}
+                                        </span>
+
+                                        <span className="flex items-center gap-1 text-[10px] text-slate-400">
+                                          <Clock className="h-2.5 w-2.5" />
+                                          {resource.est_minutes}m
+                                        </span>
+
+                                        <ExternalLink className="h-3 w-3 text-slate-400" />
+                                      </a>
+                                    )
+                                  )}
                                 </div>
                               </div>
                             );
@@ -390,68 +532,109 @@ export default function AnalysisDetailPage() {
             );
           })}
         </div>
-      </div>
+      </section>
 
-      {/* Recommended Projects */}
+      {/* -------------------------------------------------- */}
+      {/* PORTFOLIO PROJECTS */}
+      {/* -------------------------------------------------- */}
+
       {projects && projects.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-            <Award className="w-6 h-6 text-indigo-600" />
-            Recommended Portfolio Projects
-          </h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            {projects.map((proj: any) => (
+        <section className="space-y-5">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="rounded-xl bg-blue-50 p-2 dark:bg-purple-950/50">
+                <Award className="h-5 w-5 text-blue-600 dark:text-purple-400" />
+              </div>
+
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                Recommended Portfolio Projects
+              </h2>
+            </div>
+
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              Practical projects you can build to demonstrate your skills.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {projects.map((project: any) => (
               <div
-                key={proj.project_id}
-                className="bg-white dark:bg-gray-900 p-5 rounded-3xl border dark:border-gray-800 shadow-sm space-y-2"
+                key={project.project_id}
+                className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-purple-900/60 dark:bg-[#090909]"
               >
-                <div className="flex justify-between items-start">
-                  <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded">
-                    {proj.skill}
+                <div className="flex items-start justify-between gap-3">
+                  <span className="rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 dark:border-purple-900/60 dark:bg-purple-950/40 dark:text-purple-300">
+                    {project.skill}
                   </span>
-                  <span className="text-xs font-medium text-gray-500">{proj.difficulty}</span>
+
+                  <span className="text-xs font-semibold text-slate-400">
+                    {project.difficulty}
+                  </span>
                 </div>
-                <h4 className="font-bold text-base text-gray-900 dark:text-white">{proj.title}</h4>
-                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{proj.description}</p>
+
+                <h3 className="mt-4 font-bold text-slate-900 dark:text-white">
+                  {project.title}
+                </h3>
+
+                <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                  {project.description}
+                </p>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Interview Prep Section */}
+      {/* -------------------------------------------------- */}
+      {/* INTERVIEW PREPARATION */}
+      {/* -------------------------------------------------- */}
+
       {interview_prep && interview_prep.length > 0 && (
-        <div className="space-y-4 border-t dark:border-gray-800 pt-8">
+        <section className="space-y-5 border-t border-blue-100 pt-8 dark:border-purple-900/60">
           <div>
-            <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-              <Sparkles className="w-6 h-6 text-amber-500" />
-              Targeted Interview Preparation
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Custom technical and behavioral questions unlocked based on your high skill match score.
+            <div className="flex items-center gap-2">
+              <div className="rounded-xl bg-blue-50 p-2 dark:bg-purple-950/50">
+                <Sparkles className="h-5 w-5 text-blue-600 dark:text-purple-400" />
+              </div>
+
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                Targeted Interview Preparation
+              </h2>
+            </div>
+
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              Practice technical and behavioral questions based on your
+              analysis.
             </p>
           </div>
 
           <div className="space-y-4">
-            {interview_prep.map((q: any) => (
+            {interview_prep.map((question: any) => (
               <div
-                key={q.q_id}
-                className="bg-white dark:bg-gray-900 p-5 rounded-3xl border dark:border-gray-800 shadow-sm space-y-3"
+                key={question.q_id}
+                className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm dark:border-purple-900/60 dark:bg-[#090909]"
               >
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold px-2 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded">
-                    {q.category}
-                  </span>
-                </div>
-                <h4 className="font-semibold text-sm text-gray-900 dark:text-white">{q.question}</h4>
-                <div className="bg-gray-50 dark:bg-gray-800/60 p-3.5 rounded-2xl text-xs text-gray-600 dark:text-gray-300 leading-relaxed border dark:border-gray-700">
-                  <strong className="text-gray-900 dark:text-white block mb-1 font-semibold">Model Answer:</strong>
-                  {q.model_answer}
+                <span className="inline-flex rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 dark:border-purple-900/60 dark:bg-purple-950/40 dark:text-purple-300">
+                  {question.category}
+                </span>
+
+                <h3 className="mt-4 font-semibold text-slate-900 dark:text-white">
+                  {question.question}
+                </h3>
+
+                <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 dark:border-purple-900/60 dark:bg-purple-950/20">
+                  <p className="mb-1 text-xs font-bold text-slate-900 dark:text-white">
+                    Model Answer
+                  </p>
+
+                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                    {question.model_answer}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );
