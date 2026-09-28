@@ -134,7 +134,7 @@ def analyze_job_market_readiness(
             try:
                 prompt = f"Extract required technical skills from this job description as a JSON list of strings:\n{job_text}"
                 resp = client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model="gemini-1.5-flash",
                     contents=prompt,
                     config=types.GenerateContentConfig(response_mime_type="application/json")
                 )

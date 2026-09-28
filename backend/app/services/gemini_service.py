@@ -24,17 +24,25 @@ logger = logging.getLogger(__name__)
 # GEMINI CLIENT
 # ============================================================
 
+_client_instance: Optional[genai.Client] = None
+
 def get_client() -> Optional[genai.Client]:
     """
-    Create and return the Gemini client.
+    Create and return the Gemini client (singleton).
     Returns None if the API key is unavailable or initialization fails.
     """
+    global _client_instance
+
+    if _client_instance is not None:
+        return _client_instance
+
     if not settings.GEMINI_API_KEY:
         logger.warning("Gemini API key is not configured.")
         return None
 
     try:
-        return genai.Client(api_key=settings.GEMINI_API_KEY)
+        _client_instance = genai.Client(api_key=settings.GEMINI_API_KEY)
+        return _client_instance
     except Exception as e:
         logger.error(f"Failed to initialize Gemini client: {e}")
         return None
@@ -98,7 +106,7 @@ Resume:
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
@@ -155,7 +163,7 @@ Job Description:
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
@@ -266,7 +274,7 @@ Return ONLY valid JSON matching this structure:
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
@@ -336,7 +344,7 @@ Allowed difficulties:
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
@@ -416,7 +424,7 @@ Allowed categories:
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
@@ -704,6 +712,18 @@ def generate_chat_response(
                 f"your current skills and identified gaps.\n\n"
                 f"Important areas to prepare include: "
                 f"{', '.join(missing_skills[:5]) if missing_skills else 'your core technical skills'}."
+            )
+
+        # ----------------------------------------------------
+        # GREETINGS
+        # ----------------------------------------------------
+
+        greetings = ["hi", "hello", "hey", "greetings", "good morning", "good evening", "howdy"]
+        if any(question.strip().rstrip("!.,?").lower() == g or question.strip().lower().startswith(g + " ") for g in greetings):
+            role_text = f" for your **{target_role}** goals" if target_role else ""
+            return (
+                f"Hello! 👋 I'm your Skill Gap Assistant{role_text}.\n\n"
+                "I can help you analyze your missing skills, plan your learning journey, or prepare for interviews. What would you like to explore?"
             )
 
         # ----------------------------------------------------
@@ -1046,7 +1066,7 @@ Return ONLY the answer to the user.
     try:
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash",
             contents=prompt,
         )
 
@@ -1061,8 +1081,9 @@ Return ONLY the answer to the user.
 
     except Exception as e:
 
+        import traceback
         logger.error(
-            f"Gemini chatbot response failed: {e}"
+            f"Gemini chatbot response failed: {e}\n{traceback.format_exc()}"
         )
 
         # ====================================================
@@ -1156,9 +1177,33 @@ Return ONLY the answer to the user.
                 f"{', '.join(missing_skills[:5]) if missing_skills else 'your core technical skills'}."
             )
 
+        # Check for greetings
+        greetings = ["hi", "hello", "hey", "greetings", "good morning", "good evening", "howdy"]
+        if any(question.strip().rstrip("!.,?").lower() == g or question.strip().lower().startswith(g + " ") for g in greetings):
+            role_text = f" for your **{target_role}** goals" if target_role else ""
+            return (
+                f"Hello! 👋 I'm here to help you navigate your skill gap analysis{role_text}.\n\n"
+                "You can ask me questions like:\n"
+                "• *What are my biggest skill gaps?*\n"
+                "• *What should I learn first?*\n"
+                "• *How can I improve my readiness score?*\n"
+                "• *Can you suggest a learning roadmap?*\n"
+                "• *Give me interview preparation questions.*"
+            )
+
+        # General helpful fallback using user's data
+        if candidate_skills or missing_skills:
+            return (
+                f"Based on your **{target_role or 'target role'}** analysis:\n\n"
+                f"• **Current Skills**: {', '.join(candidate_skills[:5]) if candidate_skills else 'None identified'}\n"
+                f"• **Identified Gaps**: {', '.join(missing_skills[:5]) if missing_skills else 'None'}\n"
+                f"{f'• **Readiness Score**: {readiness_score:.0f}%\n\n' if readiness_score is not None else '\n'}"
+                "Feel free to ask for specific advice on how to improve in any of these areas, or what to learn next!"
+            )
+
         return (
-            "I'm having trouble connecting to the AI service "
-            "right now. Please try again in a moment."
+            "I'm here to help with your skill gap analysis. "
+            "Ask me about your skills, learning priorities, readiness score, or interview preparation!"
         )
 
 
