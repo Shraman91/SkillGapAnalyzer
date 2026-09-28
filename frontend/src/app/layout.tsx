@@ -4,12 +4,14 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { Navbar } from "@/components/Navbar";
+import { ChatBot } from "@/components/ChatBot";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "AI Skill Gap Analyzer",
-  description: "Identify skill gaps and generate personalized learning roadmaps.",
+  description:
+    "Identify skill gaps and generate personalized learning roadmaps.",
 };
 
 export default function RootLayout({
@@ -25,8 +27,12 @@ export default function RootLayout({
         <AuthProvider>
           <ThemeProvider>
             <div className="min-h-screen">
+
               {/* Sidebar */}
               <Navbar />
+
+              {/* AI Skill Gap Assistant */}
+              <ChatBot />
 
               {/* Main Area */}
               <div className="min-h-screen pl-64">
