@@ -80,19 +80,19 @@ export default function DashboardPage() {
 
             score: Number(
               item.overall_readiness ??
-                item.score ??
-                item.match_score ??
-                0
+              item.score ??
+              item.match_score ??
+              0
             ),
 
             date: item.created_at
               ? new Date(item.created_at).toLocaleDateString(
-                  "en-US",
-                  {
-                    month: "short",
-                    day: "numeric",
-                  }
-                )
+                "en-US",
+                {
+                  month: "short",
+                  day: "numeric",
+                }
+              )
               : "Recent",
 
             createdAt: item.created_at
@@ -100,7 +100,7 @@ export default function DashboardPage() {
               : 0,
           }))
           // Newest analysis first
-          .sort((a, b) => b.createdAt - a.createdAt);
+          .sort((a: Analysis, b: Analysis) => b.createdAt - a.createdAt);
 
         setAnalyses(formatted);
       } catch (error) {
@@ -315,14 +315,14 @@ export default function DashboardPage() {
 
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: "#64748b" }}
                 tickLine={false}
                 axisLine={false}
               />
 
               <YAxis
                 domain={[0, 100]}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: "#64748b" }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => `${value}%`}
@@ -339,7 +339,10 @@ export default function DashboardPage() {
                   background: "#ffffff",
                   boxShadow:
                     "0 8px 25px rgba(0,0,0,0.08)",
+                  color: "#0f172a",
                 }}
+                itemStyle={{ color: "#2563eb", fontWeight: 600 }}
+                labelStyle={{ color: "#0f172a", fontWeight: 700 }}
               />
 
               <Line

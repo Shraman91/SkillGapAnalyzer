@@ -362,7 +362,7 @@ export default function AnalyzePage() {
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white dark:focus:border-purple-600 dark:focus:ring-purple-950"
               >
                 {roles.map((r) => (
-                  <option key={r.role_id} value={r.role_id}>
+                  <option key={r.role_id} value={r.role_id} className="bg-white text-slate-900 dark:bg-zinc-900 dark:text-white">
                     {r.role_name}
                   </option>
                 ))}

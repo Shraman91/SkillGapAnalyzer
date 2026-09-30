@@ -65,9 +65,9 @@ export function SkillsRadarChart({ candidateSkills = {}, requiredSkills = {} }: 
     <div className="w-full h-72">
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data}>
-          <PolarGrid stroke="#e5e7eb" />
-          <PolarAngleAxis dataKey="skill" tick={{ fontSize: 11, fill: "#6b7280" }} />
-          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9, fill: "#9ca3af" }} />
+          <PolarGrid stroke="#cbd5e1" />
+          <PolarAngleAxis dataKey="skill" tick={{ fontSize: 11, fill: "#334155" }} />
+          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 9, fill: "#64748b" }} />
           <Radar
             name="Your Skills"
             dataKey="Candidate"

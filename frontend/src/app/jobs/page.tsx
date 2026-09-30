@@ -410,7 +410,7 @@ export default function JobsPage() {
                     ✓ Selected for analysis
                   </span>
                 ) : (
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     Select to include in analysis
                   </span>
                 )}

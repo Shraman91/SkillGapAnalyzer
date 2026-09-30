@@ -84,7 +84,7 @@ export default function SignupPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Jane Doe"
-              className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"
+              className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"
             />
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@university.edu"
-              className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"
+              className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"
             />
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function SignupPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="•••••••• (Min 6 characters)"
-              className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"
+              className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:text-white"
             />
           </div>
         </div>

@@ -121,20 +121,20 @@ function getLatestAnalysis(analyses: unknown[]) {
     const firstDate = new Date(
       String(
         first.timestamp ??
-          first.created_at ??
-          first.createdAt ??
-          first.date ??
-          0
+        first.created_at ??
+        first.createdAt ??
+        first.date ??
+        0
       )
     ).getTime();
 
     const secondDate = new Date(
       String(
         second.timestamp ??
-          second.created_at ??
-          second.createdAt ??
-          second.date ??
-          0
+        second.created_at ??
+        second.createdAt ??
+        second.date ??
+        0
       )
     ).getTime();
 
@@ -235,9 +235,9 @@ export function ChatBot() {
 
       const analysisId = String(
         latest.analysis_id ??
-          latest.analysisId ??
-          latest.id ??
-          ""
+        latest.analysisId ??
+        latest.id ??
+        ""
       );
 
       if (!analysisId) {
@@ -251,7 +251,7 @@ export function ChatBot() {
             latest.candidate_skills
           ),
           missingSkills: extractMissingSkills(
-            latest.gap_analysis?.missing_skills
+            (latest as any).gap_analysis?.missing_skills
           ),
           readinessScore: getReadinessScore(latest),
         });
@@ -625,11 +625,10 @@ export function ChatBot() {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`chat-message flex items-end gap-2 ${
-                    message.sender === "user"
+                  className={`chat-message flex items-end gap-2 ${message.sender === "user"
                       ? "justify-end"
                       : "justify-start"
-                  }`}
+                    }`}
                 >
                   {message.sender === "bot" && (
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-purple-950/60 dark:text-purple-400">
@@ -638,11 +637,10 @@ export function ChatBot() {
                   )}
 
                   <div
-                    className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-6 ${
-                      message.sender === "user"
+                    className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-6 ${message.sender === "user"
                         ? "rounded-br-md bg-blue-600 text-white dark:bg-purple-600"
                         : "rounded-bl-md border border-blue-100 bg-blue-50 text-slate-700 dark:border-purple-900/60 dark:bg-purple-950/30 dark:text-slate-200"
-                    }`}
+                      }`}
                   >
                     {message.text}
                   </div>
